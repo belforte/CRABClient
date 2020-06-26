@@ -12,11 +12,13 @@ import logging.handlers
 import time
 import pkgutil
 import sys
-import cPickle
+import pickle
 import subprocess
 import traceback
-from string import upper
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
+import six
+if six.PY2:
+    from exceptions import Exception
 from optparse import OptionValueError
 
 ## CRAB dependencies
@@ -55,7 +57,7 @@ class colors:
         RED, GREEN, BLUE, GRAY, NORMAL, BOLD = '', '', '', '', '', ''
 
 
-class StopExecution():
+class StopExecution(Exception):
     """
     Raise it to stop a client command execution without an error.
     """
@@ -81,7 +83,7 @@ class logfilter(logging.Filter):
         def removecolor(text):
             if not text:
                 return text
-            for dummyColor, colorval in colors.colordict.iteritems():
+            for dummyColor, colorval in colors.colordict.items():
                 if colorval in text:
                     text = text.replace(colorval, '')
             return text
@@ -333,7 +335,7 @@ def getJobTypes(jobtypepath = 'CRABClient', jobtypename = 'JobType'):
     allplugins = getPlugins(jobtypepath, jobtypename, ['BasicJobType'])
     result = {}
     for k in allplugins:
-        result[upper(k)] = allplugins[k]
+        result[k.upper()] = allplugins[k]
     return result
 
 

@@ -6,7 +6,7 @@ import os
 import logging
 import traceback
 import subprocess
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 from http.client import HTTPException
 
 ## WMCore dependencies

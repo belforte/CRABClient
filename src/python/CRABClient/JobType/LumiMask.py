@@ -2,8 +2,8 @@
 Module to handle lumiMask.json file
 """
 
-import urlparse
-import urllib2
+from six.moves.urllib.parse import urlparse
+from six.moves.urllib.error import HTTPError
 
 from WMCore.Lexicon import jobrange
 from WMCore.DataStructs.LumiList import LumiList
@@ -17,13 +17,13 @@ def getLumiList(lumi_mask_name, logger = None):
     lumi-mask: either an http address or a json file on disk.
     """
     lumi_list = None
-    parts = urlparse.urlparse(lumi_mask_name)
+    parts = urlparse(lumi_mask_name)
     if parts[0] in ['http', 'https']:
         if logger:
             logger.debug('Downloading lumi-mask from %s' % lumi_mask_name)
         try:
             lumi_list = LumiList(url = lumi_mask_name)
-        except urllib2.HTTPError as err:
+        except HTTPError as err:
             raise ConfigurationException("Problem downloading lumi-mask file; %s %s"
                     % (err.code, err.msg))
     else:

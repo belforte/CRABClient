@@ -3,7 +3,7 @@ from CRABClient.ClientExceptions import RESTCommunicationException
 from CRABClient import __version__
 import CRABClient.Emulator
 
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 from base64 import b64encode
 
 

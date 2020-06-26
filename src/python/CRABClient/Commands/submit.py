@@ -11,7 +11,6 @@ import urllib
 import tarfile
 import tempfile
 import subprocess
-from string import upper
 
 import CRABClient.Emulator
 from CRABClient import __version__
@@ -100,8 +99,8 @@ class submit(SubCommand):
         filecacheurl = serverBackendURLs['cacheSSL'] if 'cacheSSL' in serverBackendURLs else None
         pluginParams = [self.configuration, self.proxyfilename, self.logger, os.path.join(self.requestarea, 'inputs')]
         crab_job_types = getJobTypes()
-        if upper(self.configreq['jobtype']) in crab_job_types:
-            plugjobtype = crab_job_types[upper(self.configreq['jobtype'])](*pluginParams)
+        if self.configreq['jobtype'].upper() in crab_job_types:
+            plugjobtype = crab_job_types[self.configreq['jobtype'].upper()](*pluginParams)
             dummy_inputfiles, jobconfig = plugjobtype.run(filecacheurl)
         else:
             fullname = self.configreq['jobtype']
@@ -242,12 +241,12 @@ class submit(SubCommand):
         if external_plugin_name:
             addPlugin(external_plugin_name) # Do we need to do this here?
         if crab_plugin_name:
-            if upper(crab_plugin_name) not in crab_job_types:
+            if crab_plugin_name.upper() not in crab_job_types:
                 msg = "Invalid CRAB configuration: Parameter JobType.pluginName has an invalid value ('%s')." % (crab_plugin_name)
                 msg += "\nAllowed values are: %s." % (", ".join(['%s' % job_type for job_type in crab_job_types.keys()]))
                 return False, msg
-            msg  = "Will use CRAB %s plugin" % ("Analysis" if upper(crab_plugin_name) == 'ANALYSIS' else "PrivateMC")
-            msg += " (i.e. will run %s job type)." % ("an analysis" if upper(crab_plugin_name) == 'ANALYSIS' else "a MC generation")
+            msg  = "Will use CRAB %s plugin" % ("Analysis" if crab_plugin_name.upper() == 'ANALYSIS' else "PrivateMC")
+            msg += " (i.e. will run %s job type)." % ("an analysis" if crab_plugin_name.upper() == 'ANALYSIS' else "a MC generation")
             self.logger.debug(msg)
 
         ## Check that the requested memory does not exceed the allowed maximum.

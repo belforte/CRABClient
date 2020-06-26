@@ -125,7 +125,7 @@ class checkwrite(SubCommand):
         self.logger.info(finalmsg)
         if returndict['status'] == 'FAILED':
             self.logger.info('%sNote%s: You cannot write to a site if you did not ask permission.' % (colors.BOLD, colors.NORMAL))
-	    if 'CH_CERN' in self.options.sitename :
+            if 'CH_CERN' in self.options.sitename :
                dbgmsg = '%sAdditional diagnostic info for CERN EOS%s\n' % (colors.RED, colors.NORMAL)
                dbgcmd = "echo '== id ==>:';id"
                dbgcmd += ";echo '== voms-proxy-info -all ==>:';voms-proxy-info -all"
