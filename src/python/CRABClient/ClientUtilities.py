@@ -791,6 +791,11 @@ def checkStatusLoop(logger, server, api, taskname, targetstatus, cmdname):
 def execute_command(command=None, logger=None, timeout=None, redirect=True, live=False):
     """
     execute command with optional logging and timeout (in seconds).
+     live = True means to print command to stdout line by line as it comes
+            (to be used for commands where we really want user to see the output)
+     redirect = True : command stdout and stderr are captured in an pipe
+                    and then retrieved in python variables when we do process.communicate()
+     redirect = False : command execution writes to current stdout/stderr
     NOTE: TIMEOUT ONLY WORKS IF command IS A ONE WORD COMMAND
     Returns a 3-ple: stdout, stderr, rc
       rc=0 means success.
@@ -834,7 +839,6 @@ def execute_command(command=None, logger=None, timeout=None, redirect=True, live
             )
         else:
             proc = subprocess.Popen(command, shell=True)
-
         out, err = proc.communicate()
         rc = proc.returncode
     if rc == 124 and timeout:

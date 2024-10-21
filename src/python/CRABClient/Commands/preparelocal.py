@@ -73,28 +73,18 @@ class preparelocal(SubCommand):
 
         inputsFilename = os.path.join(os.getcwd(), 'InputFiles.tar.gz')
         sandboxFilename = os.path.join(os.getcwd(), 'sandbox.tar.gz')
-        if status == 'UPLOADED':
+        if status in ['UPLOADED', 'SUBMITTED']:
             downloadFromS3(crabserver=self.crabserver, filepath=inputsFilename,
                            objecttype='runtimefiles', taskname=taskname, logger=self.logger)
 
             downloadFromS3(crabserver=self.crabserver, filepath=sandboxFilename,
                            objecttype='sandbox', logger=self.logger,
                            tarballname=sandboxName, username=username)
-
-        elif status == 'SUBMITTED':
-            webdir = getProxiedWebDir(crabserver=self.crabserver, task=taskname,
-                                      logFunction=self.logger.debug)
-            if not webdir:
-                webdir = getColumn(crabDBInfo, 'tm_user_webdir')
-            self.logger.debug("Downloading 'InputFiles.tar.gz' from %s" % webdir)
-            httpCode = curlGetFileFromURL(webdir + '/InputFiles.tar.gz', inputsFilename, self.proxyfilename,
-                                          logger=self.logger)
-            if httpCode != 200:
-                self.logger.errror("Failed to download 'InputFiles.tar.gz' from %s", webdir)
         else:
             raise ClientException('Can only execute jobs from tasks in status SUBMITTED or UPLOADED. Current status is %s' % status)
 
         for name in [inputsFilename, 'CMSRunAnalysis.tar.gz', 'sandbox.tar.gz']:
+            # better to explabd CMSRunAnalysis in a separate command, to make it clear
             with tarfile.open(name) as tf:
                 tf.extractall()
 
