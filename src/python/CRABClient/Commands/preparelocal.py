@@ -1,21 +1,22 @@
+"""
+    The commands prepares a directory and the relative scripts to execute the jobs locally.
+    It can also execute a specific job if the jobid option is passed
+"""
 import os
 import json
 import shutil
 import tarfile
 import tempfile
 
-from ServerUtilities import getProxiedWebDir, getColumn, downloadFromS3
+from ServerUtilities import getColumn, downloadFromS3
 
-from CRABClient.UserUtilities import curlGetFileFromURL
 from CRABClient.ClientUtilities import execute_command
 from CRABClient.Commands.SubCommand import SubCommand
 from CRABClient.ClientExceptions import ClientException
 
 
 class preparelocal(SubCommand):
-    """ The commands prepares a directory and the relative scripts to execute the jobs locally.
-        It can also execute a specific job if the jobid option is passed
-    """
+    """ the preparelocal command instance """
 
     def __init__(self, logger, cmdargs=None):
         SubCommand.__init__(self, logger, cmdargs)
@@ -45,7 +46,7 @@ class preparelocal(SubCommand):
                 self.executeTestRunNew(self.options.destdir, self.options.jobid)
                 self.logger.info("Job execution terminated")
             else:
-                self.logger.info("Copying an preparing files for local execution in %s" % self.options.destdir)
+                self.logger.info("Copying and preparing files for local execution in %s" % self.options.destdir)
                 self.prepareDir(inputArgs, self.options.destdir)
                 self.logger.info("go to that directory IN A CLEAN SHELL and use  'sh run_job.sh NUMJOB' to execute the job")
         finally:
@@ -58,7 +59,6 @@ class preparelocal(SubCommand):
     def getInputFiles(self):
         """
         Get the InputFiles.tar.gz and extract the necessary files
-
         """
         taskname = self.cachedinfo['RequestName']
 
@@ -84,54 +84,57 @@ class preparelocal(SubCommand):
             raise ClientException('Can only execute jobs from tasks in status SUBMITTED or UPLOADED. Current status is %s' % status)
 
         for name in [inputsFilename, 'CMSRunAnalysis.tar.gz', 'sandbox.tar.gz']:
-            # better to explabd CMSRunAnalysis in a separate command, to make it clear
+            # better to expand CMSRunAnalysis in a separate command, to make it clear
             with tarfile.open(name) as tf:
                 tf.extractall()
 
     def executeTestRunNew(self, destDir, jobnr):
+        """
+         Execute a test run calling CMSRunAnalysis.sh
+        """
         os.chdir(destDir)
         cmd = 'eval `scram unsetenv -sh`;'\
               ' bash run_job.sh %s' % str(jobnr)
         execute_command(cmd, logger=self.logger, redirect=False)
 
-    def executeTestRun(self, inputArgs, jobnr):
-        """ Execute a test run calling CMSRunAnalysis.sh
-        """
-        os.environ.update({'CRAB3_RUNTIME_DEBUG': 'True', '_CONDOR_JOB_AD': 'Job.submit'})
-
-        optsList = [
-            os.path.join(os.getcwd(), 'TweakPSet.py'),
-            '-a %s' % inputArgs[jobnr-1]['CRAB_Archive'],
-            '-o %s' % inputArgs[jobnr-1]['CRAB_AdditionalOutputFiles'],
-            '--sourceURL=%s' % inputArgs[jobnr-1]['CRAB_ISB'],
-            '--location=%s' % os.getcwd(),
-            '--inputFile=%s' % inputArgs[jobnr-1]['inputFiles'],
-            '--runAndLumis=%s' % inputArgs[jobnr-1]['runAndLumiMask'],
-            '--firstEvent=%s' % inputArgs[jobnr-1]['firstEvent'], #jobs goes from 1 to N, inputArgs from 0 to N-1
-            '--lastEvent=%s' % inputArgs[jobnr-1]['lastEvent'],
-            '--firstLumi=%s' % inputArgs[jobnr-1]['firstLumi'],
-            '--firstRun=%s' % inputArgs[jobnr-1]['firstRun'],
-            '--seeding=%s' % inputArgs[jobnr-1]['seeding'],
-            '--lheInputFiles=%s' % inputArgs[jobnr-1]['lheInputFiles'],
-            '--oneEventMode=0',
-            '--eventsPerLumi=%s' % inputArgs[jobnr-1]['eventsPerLumi'],
-            '--maxRuntime=-1',
-            '--jobNumber=%s' % (jobnr-1),
-            '--cmsswVersion=%s' % inputArgs[jobnr-1]['CRAB_JobSW'],
-            '--scramArch=%s' % inputArgs[jobnr-1]['CRAB_JobArch'],
-            '--scriptExe=%s' % inputArgs[jobnr-1]['scriptExe'],
-            '--scriptArgs=%s' % inputArgs[jobnr-1]['scriptArgs'],
-        ]
-        # from a python list to a string which can be used as shell command argument
-        opts = ''
-        for opt in optsList:
-            opts = opts + ' %s'%opt
-        command = 'sh CMSRunAnalysis.sh ' + opts
-        out, err, returncode = execute_command(command=command)
-        self.logger.debug(out)
-        self.logger.debug(err)
-        if returncode != 0:
-            raise ClientException('Failed to execute local test run:\n StdOut: %s\n StdErr: %s' % (out, err))
+    # def executeTestRun(self, inputArgs, jobnr):
+    #     """ Execute a test run calling CMSRunAnalysis.sh
+    #     """
+    #     os.environ.update({'CRAB3_RUNTIME_DEBUG': 'True', '_CONDOR_JOB_AD': 'Job.submit'})
+    #
+    #     optsList = [
+    #         os.path.join(os.getcwd(), 'TweakPSet.py'),
+    #         '-a %s' % inputArgs[jobnr-1]['CRAB_Archive'],
+    #         '-o %s' % inputArgs[jobnr-1]['CRAB_AdditionalOutputFiles'],
+    #         '--sourceURL=%s' % inputArgs[jobnr-1]['CRAB_ISB'],
+    #         '--location=%s' % os.getcwd(),
+    #         '--inputFile=%s' % inputArgs[jobnr-1]['inputFiles'],
+    #         '--runAndLumis=%s' % inputArgs[jobnr-1]['runAndLumiMask'],
+    #         '--firstEvent=%s' % inputArgs[jobnr-1]['firstEvent'], #jobs goes from 1 to N, inputArgs from 0 to N-1
+    #         '--lastEvent=%s' % inputArgs[jobnr-1]['lastEvent'],
+    #         '--firstLumi=%s' % inputArgs[jobnr-1]['firstLumi'],
+    #         '--firstRun=%s' % inputArgs[jobnr-1]['firstRun'],
+    #         '--seeding=%s' % inputArgs[jobnr-1]['seeding'],
+    #         '--lheInputFiles=%s' % inputArgs[jobnr-1]['lheInputFiles'],
+    #         '--oneEventMode=0',
+    #         '--eventsPerLumi=%s' % inputArgs[jobnr-1]['eventsPerLumi'],
+    #         '--maxRuntime=-1',
+    #         '--jobNumber=%s' % (jobnr-1),
+    #         '--cmsswVersion=%s' % inputArgs[jobnr-1]['CRAB_JobSW'],
+    #         '--scramArch=%s' % inputArgs[jobnr-1]['CRAB_JobArch'],
+    #         '--scriptExe=%s' % inputArgs[jobnr-1]['scriptExe'],
+    #         '--scriptArgs=%s' % inputArgs[jobnr-1]['scriptArgs'],
+    #     ]
+    #     # from a python list to a string which can be used as shell command argument
+    #     opts = ''
+    #     for opt in optsList:
+    #         opts = opts + ' %s'%opt
+    #     command = 'sh CMSRunAnalysis.sh ' + opts
+    #     out, err, returncode = execute_command(command=command)
+    #     self.logger.debug(out)
+    #     self.logger.debug(err)
+    #     if returncode != 0:
+    #         raise ClientException('Failed to execute local test run:\n StdOut: %s\n StdErr: %s' % (out, err))
 
     def prepareDir(self, inputArgs, targetDir):
         """ Prepare a directory with just the necessary files:
