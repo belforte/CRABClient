@@ -92,7 +92,7 @@ class preparelocal(SubCommand):
         os.chdir(destDir)
         cmd = 'eval `scram unsetenv -sh`;'\
               ' bash run_job.sh %s' % str(jobnr)
-        execute_command(cmd, logger=self.logger, live=True)
+        execute_command(cmd, logger=self.logger, redirect=False)
 
     def executeTestRun(self, inputArgs, jobnr):
         """ Execute a test run calling CMSRunAnalysis.sh
