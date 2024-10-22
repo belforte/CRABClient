@@ -788,14 +788,9 @@ def checkStatusLoop(logger, server, api, taskname, targetstatus, cmdname):
     logger.debug("Ended %s process." % ("resubmission" if cmdname == "resubmit" else "submission"))
 
 
-def execute_command(command=None, logger=None, timeout=None, redirect=True, live=False):
+def execute_command(command=None, logger=None, timeout=None, redirect=True):
     """
     execute command with optional logging and timeout (in seconds).
-     live = True means to print command to stdout line by line as it comes
-            (to be used for commands where we really want user to see the output)
-     redirect = True : command stdout and stderr are captured in an pipe
-                    and then retrieved in python variables when we do process.communicate()
-     redirect = False : command execution writes to current stdout/stderr
     NOTE: TIMEOUT ONLY WORKS IF command IS A ONE WORD COMMAND
     Returns a 3-ple: stdout, stderr, rc
       rc=0 means success.
@@ -816,31 +811,18 @@ def execute_command(command=None, logger=None, timeout=None, redirect=True, live
         if logger:
             logger.debug('add timeout at %s seconds', timeout)
         command = ('timeout %s ' % timeout ) + command
-    if live:
+    if redirect:
         proc = subprocess.Popen(
             command, shell=True,
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
         )
-        out = bytes()
-        err = bytes()
-        for stdout_line in proc.stdout:
-            out += stdout_line
-            print(stdout_line.decode(), end="")
-        proc.stdout.close()
-        rc = proc.wait()
     else:
-        if redirect:
-            proc = subprocess.Popen(
-                command, shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                stdin=subprocess.PIPE,
-            )
-        else:
-            proc = subprocess.Popen(command, shell=True)
-        out, err = proc.communicate()
-        rc = proc.returncode
+        proc = subprocess.Popen(command, shell=True)
+
+    out, err = proc.communicate()
+    rc = proc.returncode
     if rc == 124 and timeout:
         if logger:
             logger.error('ERROR: Timeout after %s seconds in executing:\n %s' % (timeout,command))
