@@ -71,17 +71,38 @@ class preparelocal(SubCommand):
         username = getColumn(crabDBInfo, 'tm_username')
         sandboxName = getColumn(crabDBInfo, 'tm_user_sandbox')
 
+        # Try old way first
         inputsFilename = os.path.join(os.getcwd(), 'InputFiles.tar.gz')
-        sandboxFilename = os.path.join(os.getcwd(), 'sandbox.tar.gz')
-        if status in ['UPLOADED', 'SUBMITTED']:
-            downloadFromS3(crabserver=self.crabserver, filepath=inputsFilename,
-                           objecttype='runtimefiles', taskname=taskname, logger=self.logger)
-
-            downloadFromS3(crabserver=self.crabserver, filepath=sandboxFilename,
-                           objecttype='sandbox', logger=self.logger,
-                           tarballname=sandboxName, username=username)
+        if status == 'UPLOADED':
+            raise ClientException('Currently crab upload only works for tasks successfully submitted')
+        elif status == 'SUBMITTED':
+            webdir = getProxiedWebDir(crabserver=self.crabserver, task=taskname,
+                                      logFunction=self.logger.debug)
+            if not webdir:
+                webdir = getColumn(crabDBInfo, 'tm_user_webdir')
+            self.logger.debug("Downloading 'InputFiles.tar.gz' from %s" % webdir)
+            httpCode = curlGetFileFromURL(webdir + '/InputFiles.tar.gz', inputsFilename, self.proxyfilename,
+                                          logger=self.logger)
+            if httpCode != 200:
+                msg = "Failed to download 'InputFiles.tar.gz' from %s", webdir
+                msg += "Will try to get tarballs from S3"
+                self.logger.errror(msg)
         else:
             raise ClientException('Can only execute jobs from tasks in status SUBMITTED or UPLOADED. Current status is %s' % status)
+
+        if httpCode != 200:
+            # new way
+            inputsFilename = os.path.join(os.getcwd(), 'InputFiles.tar.gz')
+            sandboxFilename = os.path.join(os.getcwd(), 'sandbox.tar.gz')
+            if status in ['UPLOADED', 'SUBMITTED']:
+                downloadFromS3(crabserver=self.crabserver, filepath=inputsFilename,
+                               objecttype='runtimefiles', taskname=taskname, logger=self.logger)
+
+                downloadFromS3(crabserver=self.crabserver, filepath=sandboxFilename,
+                               objecttype='sandbox', logger=self.logger,
+                               tarballname=sandboxName, username=username)
+            else:
+                raise ClientException('Can only execute jobs from tasks in status SUBMITTED or UPLOADED. Current status is %s' % status)
 
         for name in [inputsFilename, 'CMSRunAnalysis.tar.gz', 'sandbox.tar.gz']:
             # better to expand CMSRunAnalysis in a separate command, to make it clear
