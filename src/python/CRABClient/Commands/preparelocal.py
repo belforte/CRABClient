@@ -77,6 +77,7 @@ class preparelocal(SubCommand):
             raise ClientException('Currently crab upload only works for tasks successfully submitted')
         elif status == 'SUBMITTED':
             from ServerUtilities import getProxiedWebDir
+            from CRABClient.UserUtilities import curlGetFileFromURL
             webdir = getProxiedWebDir(crabserver=self.crabserver, task=taskname,
                                       logFunction=self.logger.debug)
             if not webdir:
