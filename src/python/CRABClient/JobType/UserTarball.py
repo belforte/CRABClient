@@ -267,7 +267,7 @@ class UserTarball(object):
                 break
         return contentList
 
-    def upload(self, filecacheurl=None):
+    def upload(self):
         """
         Upload the tarball to the File Cache
         """
@@ -301,8 +301,8 @@ class UserTarball(object):
             self.logger.debug(fullList)
             raise SandboxTooBigException(msg)
 
-        msg = ("Uploading archive %s (%s) to the CRAB cache. Using URI %s" %
-               (archiveName, archiveSize, filecacheurl))
+        msg = ("Uploading archive %s (%s) to the CRAB cache." %
+               (archiveName, archiveSize))
         self.logger.debug(msg)
 
         # generate a 32char hash like old UserFileCache used to do

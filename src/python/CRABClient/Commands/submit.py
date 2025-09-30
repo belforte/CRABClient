@@ -97,13 +97,12 @@ class submit(SubCommand):
 
         serverBackendURLs = server_info(crabserver=self.crabserver, subresource='backendurls')
         #if cacheSSL is specified in the server external configuration we will use it to upload the sandbox
-        filecacheurl = serverBackendURLs['cacheSSL'] if 'cacheSSL' in serverBackendURLs else None
         pluginParams = [self.configuration, self.proxyfilename, self.logger,
                         os.path.join(self.requestarea, 'inputs'), self.crabserver, self.s3tester]
         crab_job_types = getJobTypes()
         if self.configreq['jobtype'].upper() in crab_job_types:
             plugjobtype = crab_job_types[self.configreq['jobtype'].upper()](*pluginParams)
-            dummy_inputfiles, jobconfig = plugjobtype.run(filecacheurl)
+            dummy_inputfiles, jobconfig = plugjobtype.run()
         else:
             fullname = self.configreq['jobtype']
             basename = os.path.basename(fullname).split('.')[0]
@@ -163,7 +162,7 @@ class submit(SubCommand):
         if self.options.dryrun:
             self.logger.info("Dry run")
             self.runPrepareLocal(projDir)
-            self.printDryRunResults(*self.executeTestRun(filecacheurl, uniquerequestname, projDir))
+            self.printDryRunResults(*self.executeTestRun(uniquerequestname, projDir))
 
         self.logger.debug("About to return")
 
@@ -425,7 +424,7 @@ class submit(SubCommand):
         return str(encoded)
 
 
-    def executeTestRun(self, filecacheurl, uniquerequestname, projDir):
+    def executeTestRun(self, uniquerequestname, projDir):
         """
         Downloads the dry run tarball from the User File Cache and unpacks it in a temporary directory.
         Runs a trial to obtain the performance report. Repeats trial with successively larger input events

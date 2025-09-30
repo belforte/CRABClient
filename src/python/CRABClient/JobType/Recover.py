@@ -120,7 +120,7 @@ class Recover(BasicJobType):
 
         return task
 
-    def run(self, filecacheurl = None):
+    def run(self):
         """
         Override run() for JobType Recover.
 
@@ -157,7 +157,7 @@ class Recover(BasicJobType):
 
             dtb.addMonFiles()
             try:
-                debugFilesUploadResult = dtb.upload(filecacheurl = filecacheurl)
+                debugFilesUploadResult = dtb.upload()
             except Exception as e:
                 msg = ("Problem uploading debug_files.tar.gz.\nError message: %s.\n"
                        "More details can be found in %s" % (e, self.logger.logfile))
@@ -257,7 +257,6 @@ class Recover(BasicJobType):
         configreq['cachefilename'] = newCachefilename
         configreq['debugfilename'] = newDebugfilename
         configreq['debugfilename'] = "%s.tar.gz" % debugFilesUploadResult
-        configreq['cacheurl'] = filecacheurl
 
         # pop
         configreq.pop('username', None)

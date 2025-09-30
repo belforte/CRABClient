@@ -40,7 +40,7 @@ class Analysis(BasicJobType):
     """
 
 
-    def run(self, filecacheurl = None, ):  # pylint: disable=arguments-differ
+    def run(self):
         """
         Override run() for JobType
         """
@@ -164,7 +164,7 @@ class Analysis(BasicJobType):
             inputFiles = [re.sub(r'^file:', '', f) for f in getattr(self.config.JobType, 'inputFiles', [])]
             tb.addFiles(userFiles=inputFiles, cfgOutputName=cfgOutputName)
             try:
-                uploadResult = tb.upload(filecacheurl = filecacheurl)
+                uploadResult = tb.upload()
             except HTTPException as hte:
                 if 'X-Error-Info' in hte.headers:
                     reason = hte.headers['X-Error-Info']
@@ -191,13 +191,12 @@ class Analysis(BasicJobType):
                          crabserver=self.crabserver, s3tester=self.s3tester) as dtb:
             dtb.addMonFiles()
             try:
-                debugFilesUploadResult = dtb.upload(filecacheurl = filecacheurl)
+                debugFilesUploadResult = dtb.upload()
             except Exception as e:
                 msg = ("Problem uploading debug_files.tar.gz.\nError message: %s.\n"
                        "More details can be found in %s" % (e, self.logger.logfile))
                 LOGGERS['CRAB3'].exception(msg) #the traceback is only printed into the logfile
 
-        configArguments['cacheurl'] = filecacheurl
         configArguments['cachefilename'] = "%s.tar.gz" % uploadResult
         if debugFilesUploadResult is not None:
             configArguments['debugfilename'] = "%s.tar.gz" % debugFilesUploadResult

@@ -55,7 +55,7 @@ class CopyCat(BasicJobType):
         return dictresult, webdir
 
 
-    def run(self, filecacheurl = None):
+    def run(self):
         """
         Override run() for JobType
         """
@@ -81,13 +81,12 @@ class CopyCat(BasicJobType):
         if getattr(self.config.Data, 'inputDataset', None):
             configArguments['inputdata'] = self.config.Data.inputDataset
 
-        ufc = CRABClient.Emulator.getEmulator('ufc')({'endpoint' : filecacheurl, "pycurl": True})
+        ufc = CRABClient.Emulator.getEmulator('ufc')({"pycurl": True})
         result = ufc.upload(sandboxFilename, excludeList = NEW_USER_SANDBOX_EXCLUSIONS)
         if 'hashkey' not in result:
             self.logger.error("Failed to upload source files: %s" % str(result))
             raise CachefileNotFoundException
 
-        configArguments['cacheurl'] = filecacheurl
         configArguments['cachefilename'] = "%s.tar.gz" % str(result['hashkey'])
 
         # Upload list of user-defined input files to process as the primary input
